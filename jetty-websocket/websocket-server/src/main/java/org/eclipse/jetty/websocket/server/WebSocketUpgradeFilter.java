@@ -35,6 +35,7 @@ import org.eclipse.jetty.http.pathmap.MappedResource;
 import org.eclipse.jetty.http.pathmap.PathSpec;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.Source;
 import org.eclipse.jetty.util.annotation.ManagedAttribute;
 import org.eclipse.jetty.util.annotation.ManagedObject;
 import org.eclipse.jetty.util.component.Dumpable;
@@ -85,7 +86,8 @@ public class WebSocketUpgradeFilter implements Filter, MappedWebSocketCreator, D
             String pathSpec = "/*";
             EnumSet<DispatcherType> dispatcherTypes = EnumSet.of(DispatcherType.REQUEST);
 
-            FilterHolder fholder = new FilterHolder(filter);
+            FilterHolder fholder = new FilterHolder(Source.TRANSIENT);
+            fholder.setFilter(filter);
             fholder.setName(name);
             fholder.setAsyncSupported(true);
             fholder.setInitParameter(CONTEXT_ATTRIBUTE_KEY, WebSocketUpgradeFilter.class.getName());
@@ -182,11 +184,14 @@ public class WebSocketUpgradeFilter implements Filter, MappedWebSocketCreator, D
     {
         try
         {
+            // We must null out configuration as it is not persistent between restarts.
+            NativeWebSocketConfiguration config = configuration;
+            boolean stopConfig = localConfiguration;
+            configuration = null;
             alreadySetToAttribute = false;
-            if (localConfiguration)
-            {
-                configuration.stop();
-            }
+            localConfiguration = false;
+            if (stopConfig)
+                config.stop();
         }
         catch (Exception e)
         {

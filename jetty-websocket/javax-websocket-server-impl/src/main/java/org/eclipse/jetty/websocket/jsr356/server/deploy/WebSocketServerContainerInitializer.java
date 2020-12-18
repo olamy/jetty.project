@@ -74,17 +74,20 @@ public class WebSocketServerContainerInitializer implements ServletContainerInit
         @Override
         public void contextDestroyed(ServletContextEvent sce)
         {
-            // remove any ServerContainer beans
             ServletContextHandler handler = ServletContextHandler.getServletContextHandler(sce.getServletContext());
             if (handler != null)
             {
+                // Remove any ServerContainer beans.
                 ServerContainer bean = handler.getBean(ServerContainer.class);
                 if (bean != null)
                     handler.removeBean(bean);
+
+                // Remove reference in ServletContextHandler.
+                handler.removeAttribute(ATTR_JAVAX_SERVER_CONTAINER);
             }
 
-            //remove reference in attributes
-            sce.getServletContext().removeAttribute(javax.websocket.server.ServerContainer.class.getName());
+            // Remove reference in ServletContext.
+            sce.getServletContext().removeAttribute(ATTR_JAVAX_SERVER_CONTAINER);
         }
     }
 
@@ -206,9 +209,9 @@ public class WebSocketServerContainerInitializer implements ServletContainerInit
                 }
             }
 
-            // Create the Jetty ServerContainer implementation
+            // Create the Jetty ServerContainer implementation (bean is removed from ContextHandler in DestroyListener).
             serverContainer = new ServerContainer(nativeWebSocketConfiguration, httpClient);
-            context.addBean(serverContainer);
+            context.addManaged(serverContainer);
 
             // Store a reference to the ServerContainer per javax.websocket spec 1.0 final section 6.4 Programmatic Server Deployment
             context.setAttribute(ATTR_JAVAX_SERVER_CONTAINER, serverContainer);

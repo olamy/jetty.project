@@ -27,6 +27,7 @@ public class Source
 {
     public static final Source EMBEDDED = new Source(Origin.EMBEDDED, null);
     public static final Source JAVAX_API = new Source(Origin.JAVAX_API, null);
+    public static final Source TRANSIENT = new Source(Origin.EMBEDDED, null);
 
     public enum Origin
     {

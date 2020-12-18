@@ -24,6 +24,8 @@ import javax.servlet.ServletContext;
 
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.listener.ContainerInitializer;
+import org.eclipse.jetty.util.component.AbstractLifeCycle;
+import org.eclipse.jetty.util.component.LifeCycle;
 
 public class NativeWebSocketServletContainerInitializer implements ServletContainerInitializer
 {
@@ -63,8 +65,19 @@ public class NativeWebSocketServletContainerInitializer implements ServletContai
             configuration = new NativeWebSocketConfiguration(context.getServletContext());
             context.setAttribute(ATTR_KEY, configuration);
 
-            // Attach default configuration to context lifecycle
+            // Attach default configuration to context lifecycle.
             context.addManaged(configuration);
+            NativeWebSocketConfiguration finalConfiguration = configuration;
+            context.addLifeCycleListener(new AbstractLifeCycle.AbstractLifeCycleListener()
+            {
+                @Override
+                public void lifeCycleStopped(LifeCycle event)
+                {
+                    context.removeAttribute(ATTR_KEY);
+                    context.removeBean(finalConfiguration);
+                    context.removeLifeCycleListener(this);
+                }
+            });
         }
         return configuration;
     }
