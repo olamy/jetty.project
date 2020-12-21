@@ -29,7 +29,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import javax.servlet.DispatcherType;
+import javax.servlet.ServletException;
 
+import org.eclipse.jetty.http.pathmap.PathSpec;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.FilterHolder;
@@ -76,7 +78,7 @@ public class WebSocketUpgradeFilterTest
         client.stop();
     }
 
-    private static AtomicInteger uniqTestDirId = new AtomicInteger(0);
+    private static final AtomicInteger uniqTestDirId = new AtomicInteger(0);
 
     private static File getNewTestDir()
     {
@@ -89,8 +91,7 @@ public class WebSocketUpgradeFilterTest
 
         List<Arguments> cases = new ArrayList<>();
 
-        // Embedded WSUF.configureContext(), directly app-ws configuration
-
+        // Embedded WSUF.configureContext(), directly app-ws configuration.
         cases.add(Arguments.of("wsuf.configureContext/Direct configure", (ServerProvider)() ->
         {
             Server server1 = new Server();
@@ -102,18 +103,26 @@ public class WebSocketUpgradeFilterTest
             context.setContextPath("/");
             server1.setHandler(context);
 
-            WebSocketUpgradeFilter wsuf = WebSocketUpgradeFilter.configureContext(context);
-
-            // direct configuration via WSUF
-            wsuf.getFactory().getPolicy().setMaxTextMessageSize(10 * 1024 * 1024);
-            wsuf.addMapping("/info/*", infoCreator);
+            NativeWebSocketServletContainerInitializer.configure(context, (servletContext, container) ->
+            {
+                try
+                {
+                    // direct configuration via WSUF
+                    WebSocketUpgradeFilter upgradeFilter = WebSocketUpgradeFilter.configure(context);
+                    upgradeFilter.getFactory().getPolicy().setMaxTextMessageSize(10 * 1024 * 1024);
+                    upgradeFilter.addMapping("/info/*", infoCreator);
+                }
+                catch (ServletException e)
+                {
+                    throw new RuntimeException(e);
+                }
+            });
 
             server1.start();
             return server1;
         }));
 
-        // Embedded WSUF.configureContext(), apply app-ws configuration via attribute
-
+        // Embedded WSUF.configureContext(), apply app-ws configuration via attribute.
         cases.add(Arguments.of("wsuf.configureContext/Attribute based configure", (ServerProvider)() ->
         {
             Server server12 = new Server();
@@ -121,25 +130,25 @@ public class WebSocketUpgradeFilterTest
             connector.setPort(0);
             server12.addConnector(connector);
 
-            ServletContextHandler context = new ServletContextHandler();
-            context.setContextPath("/");
-            server12.setHandler(context);
+            ServletContextHandler contextHandler = new ServletContextHandler();
+            contextHandler.setContextPath("/");
+            server12.setHandler(contextHandler);
 
-            WebSocketUpgradeFilter.configureContext(context);
-
-            // configuration via attribute
-            NativeWebSocketConfiguration configuration = (NativeWebSocketConfiguration)context.getServletContext().getAttribute(NativeWebSocketConfiguration.class.getName());
-            assertThat("NativeWebSocketConfiguration", configuration, notNullValue());
-            configuration.getFactory().getPolicy().setMaxTextMessageSize(10 * 1024 * 1024);
-            configuration.addMapping("/info/*", infoCreator);
+            contextHandler.addFilter(WebSocketUpgradeFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));
+            NativeWebSocketServletContainerInitializer.configure(contextHandler, (context, container) ->
+            {
+                // Configuration via attribute.
+                NativeWebSocketConfiguration configuration = (NativeWebSocketConfiguration)contextHandler.getServletContext().getAttribute(NativeWebSocketConfiguration.class.getName());
+                assertThat("NativeWebSocketConfiguration", configuration, notNullValue());
+                configuration.getFactory().getPolicy().setMaxTextMessageSize(10 * 1024 * 1024);
+                configuration.addMapping("/info/*", infoCreator);
+            });
 
             server12.start();
-
             return server12;
         }));
 
-        // Embedded WSUF, added as filter, apply app-ws configuration via attribute
-
+        // Embedded WSUF, added as filter, apply app-ws configuration via attribute.
         cases.add(Arguments.of("wsuf/addFilter/Attribute based configure", (ServerProvider)() ->
         {
             Server server13 = new Server();
@@ -162,38 +171,33 @@ public class WebSocketUpgradeFilterTest
             return server13;
         }));
 
-        // Embedded WSUF, added as filter, apply app-ws configuration via wsuf constructor
-
-        cases.add(Arguments.of("wsuf/addFilter/WSUF Constructor configure", new ServerProvider()
+        // Embedded WSUF, added as filter, apply app-ws configuration via wsuf constructor.
+        cases.add(Arguments.of("wsuf/addFilter/WSUF Constructor configure", (ServerProvider)() ->
         {
-            @Override
-            public Server newServer() throws Exception
-            {
-                Server server = new Server();
-                ServerConnector connector = new ServerConnector(server);
-                connector.setPort(0);
-                server.addConnector(connector);
+            Server server = new Server();
+            ServerConnector connector = new ServerConnector(server);
+            connector.setPort(0);
+            server.addConnector(connector);
 
-                ServletContextHandler context = new ServletContextHandler();
-                context.setContextPath("/");
-                server.setHandler(context);
+            ServletContextHandler context = new ServletContextHandler();
+            context.setContextPath("/");
+            server.setHandler(context);
 
-                NativeWebSocketConfiguration configuration = new NativeWebSocketConfiguration(context.getServletContext());
-                configuration.getFactory().getPolicy().setMaxTextMessageSize(10 * 1024 * 1024);
-                configuration.addMapping("/info/*", infoCreator);
-                context.addBean(configuration, true);
+            NativeWebSocketConfiguration configuration = new NativeWebSocketConfiguration(context.getServletContext());
+            configuration.getFactory().getPolicy().setMaxTextMessageSize(10 * 1024 * 1024);
+            configuration.addMapping("/info/*", infoCreator);
+            context.addBean(configuration, true);
+            context.setAttribute(NativeWebSocketConfiguration.class.getName(), configuration);
 
-                FilterHolder wsufHolder = new FilterHolder(new WebSocketUpgradeFilter(configuration));
-                context.addFilter(wsufHolder, "/*", EnumSet.of(DispatcherType.REQUEST));
+            FilterHolder wsufHolder = new FilterHolder(new WebSocketUpgradeFilter(configuration));
+            context.addFilter(wsufHolder, "/*", EnumSet.of(DispatcherType.REQUEST));
 
-                server.start();
+            server.start();
 
-                return server;
-            }
+            return server;
         }));
 
-        // Embedded WSUF, added as filter, apply app-ws configuration via ServletContextListener
-
+        // Embedded WSUF, added as filter, apply app-ws configuration via ServletContextListener.
         cases.add(Arguments.of("wsuf.configureContext/ServletContextListener configure", (ServerProvider)() ->
         {
             Server server14 = new Server();
@@ -212,8 +216,7 @@ public class WebSocketUpgradeFilterTest
             return server14;
         }));
 
-        // WSUF from web.xml, SCI active, apply app-ws configuration via ServletContextListener
-
+        // WSUF from web.xml, SCI active, apply app-ws configuration via ServletContextListener.
         cases.add(Arguments.of("wsuf/WebAppContext/web.xml/ServletContextListener", (ServerProvider)() ->
         {
             File testDir = getNewTestDir();
@@ -231,35 +234,29 @@ public class WebSocketUpgradeFilterTest
             return server15.getServer();
         }));
 
-        // WSUF from web.xml, SCI active, apply app-ws configuration via ServletContextListener with WEB-INF/lib/jetty-http.jar
-
-        cases.add(Arguments.of("wsuf/WebAppContext/web.xml/ServletContextListener/jetty-http.jar", new ServerProvider()
+        // WSUF from web.xml, SCI active, apply app-ws configuration via ServletContextListener with WEB-INF/lib/jetty-http.jar.
+        cases.add(Arguments.of("wsuf/WebAppContext/web.xml/ServletContextListener/jetty-http.jar", (ServerProvider)() ->
         {
-            @Override
-            public Server newServer() throws Exception
-            {
-                File testDir = getNewTestDir();
+            File testDir = getNewTestDir();
 
-                WSServer server = new WSServer(testDir, "/");
+            WSServer server = new WSServer(testDir, "/");
 
-                server.copyWebInf("wsuf-config-via-listener.xml");
-                server.copyClass(InfoSocket.class);
-                server.copyClass(InfoContextAttributeListener.class);
-                // Add a jetty-http.jar to ensure that the classloader constraints
-                // and the WebAppClassloader setup is sane and correct
-                // The odd version string is present to capture bad regex behavior in Jetty
-                server.copyLib(org.eclipse.jetty.http.pathmap.PathSpec.class, "jetty-http-9.99.999.jar");
-                server.start();
+            server.copyWebInf("wsuf-config-via-listener.xml");
+            server.copyClass(InfoSocket.class);
+            server.copyClass(InfoContextAttributeListener.class);
+            // Add a jetty-http.jar to ensure that the classloader constraints
+            // and the WebAppClassloader setup is sane and correct
+            // The odd version string is present to capture bad regex behavior in Jetty
+            server.copyLib(PathSpec.class, "jetty-http-9.99.999.jar");
+            server.start();
 
-                WebAppContext webapp = server.createWebAppContext();
-                server.deployWebapp(webapp);
+            WebAppContext webapp = server.createWebAppContext();
+            server.deployWebapp(webapp);
 
-                return server.getServer();
-            }
+            return server.getServer();
         }));
 
-        // WSUF from web.xml, SCI active, apply app-ws configuration via Servlet.init
-
+        // WSUF from web.xml, SCI active, apply app-ws configuration via Servlet.init.
         cases.add(Arguments.of("wsuf/WebAppContext/web.xml/Servlet.init", (ServerProvider)() ->
         {
             File testDir = getNewTestDir();
@@ -277,8 +274,7 @@ public class WebSocketUpgradeFilterTest
             return server16.getServer();
         }));
 
-        // xml based, wsuf, on alternate url-pattern and config attribute location
-
+        // xml based, wsuf, on alternate url-pattern and config attribute location.
         cases.add(Arguments.of("wsuf/WebAppContext/web.xml/ServletContextListener/alt-config", (ServerProvider)() ->
         {
             File testDir = getNewTestDir();
