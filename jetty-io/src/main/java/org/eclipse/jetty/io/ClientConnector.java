@@ -266,10 +266,11 @@ public class ClientConnector extends ContainerLifeCycle implements IClientConnec
         }
     }
 
-    public void accept(SocketChannel channel, Map<String, Object> context)
+    public void accept(SelectableChannel selectableChannel, Map<String, Object> context)
     {
         try
         {
+            SocketChannel channel = (SocketChannel)selectableChannel;
             context.put(ClientConnector.CLIENT_CONNECTOR_CONTEXT_KEY, this);
             if (!channel.isConnected())
                 throw new IllegalStateException("SocketChannel must be connected");
@@ -280,22 +281,22 @@ public class ClientConnector extends ContainerLifeCycle implements IClientConnec
         catch (Throwable failure)
         {
             if (LOG.isDebugEnabled())
-                LOG.debug("Could not accept {}", channel);
-            IO.close(channel);
+                LOG.debug("Could not accept {}", selectableChannel);
+            IO.close(selectableChannel);
             Promise<?> promise = (Promise<?>)context.get(CONNECTION_PROMISE_CONTEXT_KEY);
             if (promise != null)
                 promise.failed(failure);
         }
     }
 
-    protected void configure(SocketChannel channel) throws IOException
+    protected void configure(SelectableChannel selectableChannel) throws IOException
     {
-        channel.socket().setTcpNoDelay(true);
+        ((SocketChannel)selectableChannel).socket().setTcpNoDelay(true);
     }
 
-    protected EndPoint newEndPoint(SocketChannel channel, ManagedSelector selector, SelectionKey selectionKey)
+    protected EndPoint newEndPoint(SelectableChannel selectableChannel, ManagedSelector selector, SelectionKey selectionKey)
     {
-        return new SocketChannelEndPoint(channel, selector, selectionKey, getScheduler());
+        return new SocketChannelEndPoint((SocketChannel)selectableChannel, selector, selectionKey, getScheduler());
     }
 
     protected void connectFailed(Throwable failure, Map<String, Object> context)
