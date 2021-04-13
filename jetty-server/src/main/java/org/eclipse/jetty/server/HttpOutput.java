@@ -309,7 +309,7 @@ public class HttpOutput extends ServletOutputStream implements Runnable
 
         try
         {
-            if (failure != null)
+            if (failure != null && _channel.isCommitted())
                 _channel.abort(failure);
 
             if (closedCallback != null)

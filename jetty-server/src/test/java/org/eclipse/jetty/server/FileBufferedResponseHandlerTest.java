@@ -20,21 +20,28 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import javax.servlet.AsyncContext;
+import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
+import javax.servlet.WriteListener;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.http.HttpTester;
 import org.eclipse.jetty.server.handler.AbstractHandler;
-import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.FileBufferedResponseHandler;
+import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.toolchain.test.FS;
 import org.eclipse.jetty.toolchain.test.MavenTestingUtils;
+import org.eclipse.jetty.util.BufferUtil;
+import org.eclipse.jetty.util.Callback;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,6 +50,7 @@ import org.slf4j.LoggerFactory;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -81,10 +89,7 @@ public class FileBufferedResponseHandlerTest
         _bufferedHandler.getPathIncludeExclude().exclude("*.exclude");
         _bufferedHandler.getMimeIncludeExclude().exclude("text/excluded");
 
-        ContextHandler contextHandler = new ContextHandler("/ctx");
-        contextHandler.setHandler(_bufferedHandler);
-        _server.setHandler(contextHandler);
-
+        _server.setHandler(_bufferedHandler);
         FS.ensureEmpty(_testDir);
     }
 
@@ -112,7 +117,7 @@ public class FileBufferedResponseHandlerTest
         });
 
         _server.start();
-        String rawResponse = _localConnector.getResponse("GET /ctx/path HTTP/1.1\r\nHost: localhost\r\n\r\n");
+        String rawResponse = _localConnector.getResponse("GET /path HTTP/1.1\r\nHost: localhost\r\n\r\n");
         HttpTester.Response response = HttpTester.parseResponse(rawResponse);
         String responseContent = response.getContent();
 
@@ -141,7 +146,7 @@ public class FileBufferedResponseHandlerTest
         });
 
         _server.start();
-        String rawResponse = _localConnector.getResponse("GET /ctx/include/path HTTP/1.1\r\nHost: localhost\r\n\r\n");
+        String rawResponse = _localConnector.getResponse("GET /include/path HTTP/1.1\r\nHost: localhost\r\n\r\n");
         HttpTester.Response response = HttpTester.parseResponse(rawResponse);
         String responseContent = response.getContent();
 
@@ -170,7 +175,7 @@ public class FileBufferedResponseHandlerTest
         });
 
         _server.start();
-        String rawResponse = _localConnector.getResponse("GET /ctx/include/path.exclude HTTP/1.1\r\nHost: localhost\r\n\r\n");
+        String rawResponse = _localConnector.getResponse("GET /include/path.exclude HTTP/1.1\r\nHost: localhost\r\n\r\n");
         HttpTester.Response response = HttpTester.parseResponse(rawResponse);
         String responseContent = response.getContent();
 
@@ -201,7 +206,7 @@ public class FileBufferedResponseHandlerTest
         });
 
         _server.start();
-        String rawResponse = _localConnector.getResponse("GET /ctx/include/path HTTP/1.1\r\nHost: localhost\r\n\r\n");
+        String rawResponse = _localConnector.getResponse("GET /include/path HTTP/1.1\r\nHost: localhost\r\n\r\n");
         HttpTester.Response response = HttpTester.parseResponse(rawResponse);
         String responseContent = response.getContent();
 
@@ -232,7 +237,7 @@ public class FileBufferedResponseHandlerTest
         });
 
         _server.start();
-        String rawResponse = _localConnector.getResponse("GET /ctx/include/path HTTP/1.1\r\nHost: localhost\r\n\r\n");
+        String rawResponse = _localConnector.getResponse("GET /include/path HTTP/1.1\r\nHost: localhost\r\n\r\n");
         HttpTester.Response response = HttpTester.parseResponse(rawResponse);
         String responseContent = response.getContent();
 
@@ -263,7 +268,7 @@ public class FileBufferedResponseHandlerTest
         });
 
         _server.start();
-        String rawResponse = _localConnector.getResponse("GET /ctx/include/path HTTP/1.1\r\nHost: localhost\r\n\r\n");
+        String rawResponse = _localConnector.getResponse("GET /include/path HTTP/1.1\r\nHost: localhost\r\n\r\n");
         HttpTester.Response response = HttpTester.parseResponse(rawResponse);
         String responseContent = response.getContent();
 
@@ -294,7 +299,7 @@ public class FileBufferedResponseHandlerTest
         });
 
         _server.start();
-        String rawResponse = _localConnector.getResponse("GET /ctx/include/path HTTP/1.1\r\nHost: localhost\r\n\r\n");
+        String rawResponse = _localConnector.getResponse("GET /include/path HTTP/1.1\r\nHost: localhost\r\n\r\n");
         HttpTester.Response response = HttpTester.parseResponse(rawResponse);
         String responseContent = response.getContent();
 
@@ -324,7 +329,7 @@ public class FileBufferedResponseHandlerTest
         });
 
         _server.start();
-        String rawResponse = _localConnector.getResponse("GET /ctx/include/path HTTP/1.1\r\nHost: localhost\r\n\r\n");
+        String rawResponse = _localConnector.getResponse("GET /include/path HTTP/1.1\r\nHost: localhost\r\n\r\n");
         HttpTester.Response response = HttpTester.parseResponse(rawResponse);
         String responseContent = response.getContent();
 
@@ -360,7 +365,7 @@ public class FileBufferedResponseHandlerTest
         });
 
         _server.start();
-        String rawResponse = _localConnector.getResponse("GET /ctx/include/path HTTP/1.1\r\nHost: localhost\r\n\r\n");
+        String rawResponse = _localConnector.getResponse("GET /include/path HTTP/1.1\r\nHost: localhost\r\n\r\n");
         HttpTester.Response response = HttpTester.parseResponse(rawResponse);
         String responseContent = response.getContent();
 
@@ -431,7 +436,7 @@ public class FileBufferedResponseHandlerTest
         try (Socket socket = new Socket("localhost", _serverConnector.getLocalPort()))
         {
             OutputStream output = socket.getOutputStream();
-            String request = "GET /ctx/include/path HTTP/1.1\r\nHost: localhost\r\n\r\n";
+            String request = "GET /include/path HTTP/1.1\r\nHost: localhost\r\n\r\n";
             output.write(request.getBytes(StandardCharsets.UTF_8));
             output.flush();
 
@@ -446,6 +451,206 @@ public class FileBufferedResponseHandlerTest
         assertThat(getNumFiles(), is(0));
     }
 
+    @Test
+    public void testAsyncWriteFailed() throws Exception
+    {
+        FailingInterceptorHandler failingInterceptorHandler = new FailingInterceptorHandler();
+        _server.setHandler(new HandlerCollection(failingInterceptorHandler, _server.getHandler()));
+        _bufferedHandler.setHandler(new AbstractHandler()
+        {
+            @Override
+            public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException
+            {
+                baseRequest.setHandled(true);
+                byte[] chunk1 = "this content will ".getBytes();
+                byte[] chunk2 = "be buffered in a file".getBytes();
+                response.setContentLength(chunk1.length + chunk2.length);
+
+                AsyncContext asyncContext = request.startAsync();
+                ServletOutputStream outputStream = response.getOutputStream();
+                outputStream.setWriteListener(new WriteListener()
+                {
+                    private int state = 0;
+
+                    @Override
+                    public void onWritePossible() throws IOException
+                    {
+                        while (outputStream.isReady())
+                        {
+                            if (state == 0)
+                            {
+                                outputStream.write(chunk1);
+                                state++;
+                            }
+                            else if (state == 1)
+                            {
+                                outputStream.flush();
+                                state++;
+                            }
+                            else if (state == 2)
+                            {
+                                outputStream.write(chunk2);
+                                state++;
+                            }
+                            else
+                            {
+                                outputStream.close();
+                                asyncContext.complete();
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable t)
+                    {
+                        if (!response.isCommitted())
+                        {
+                            response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR_500);
+                            response.addHeader("throwableFromOnError", t.getMessage());
+                            response.setContentLength(0);
+                        }
+
+                        asyncContext.complete();
+                    }
+                });
+            }
+        });
+
+        _server.start();
+        String rawResponse = _localConnector.getResponse("GET /include/path HTTP/1.1\r\nHost: localhost\r\n\r\n");
+        HttpTester.Response response = HttpTester.parseResponse(rawResponse);
+        String responseContent = response.getContent();
+
+        System.err.println(response);
+
+        // Resetting the response buffer will delete the file.
+        assertThat(response.getStatus(), is(HttpStatus.OK_200));
+        assertThat(responseContent, containsString("this content will be buffered in a file"));
+        assertThat(responseContent, containsString("NumFiles: 1"));
+        assertThat(getNumFiles(), is(0));
+    }
+
+    // TODO: add testcase that a subsequent interceptor fails and
+    @Test
+    public void testWriteFailed() throws Exception
+    {
+        AtomicReference<Throwable> error = new AtomicReference<>();
+        FailingInterceptorHandler failingInterceptorHandler = new FailingInterceptorHandler();
+        _server.setHandler(new HandlerCollection(failingInterceptorHandler, _server.getHandler()));
+        _bufferedHandler.setHandler(new AbstractHandler()
+        {
+            @Override
+            public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException
+            {
+                baseRequest.setHandled(true);
+                ByteBuffer message = BufferUtil.toBuffer("this content will be buffered in a file");
+                response.setContentLength(message.remaining());
+                ServletOutputStream outputStream = response.getOutputStream();
+
+                try
+                {
+                    BufferUtil.writeTo(message, outputStream);
+                }
+                catch (Throwable t)
+                {
+                    error.set(t);
+                    throw t;
+                }
+            }
+        });
+
+        _server.start();
+        String rawResponse = _localConnector.getResponse("GET /include/path HTTP/1.1\r\nHost: localhost\r\n\r\n");
+        HttpTester.Response response = HttpTester.parseResponse(rawResponse);
+        String responseContent = response.getContent();
+
+        error.get().printStackTrace();
+        System.err.println(response);
+
+        // Resetting the response buffer will delete the file.
+        assertThat(response.getStatus(), is(HttpStatus.OK_200));
+        assertThat(responseContent, containsString("this content will be buffered in a file"));
+        assertThat(responseContent, containsString("NumFiles: 1"));
+        assertThat(getNumFiles(), is(0));
+    }
+
+    @Test
+    public void testFileWriteFailed() throws Exception
+    {
+        AtomicReference<Throwable> error = new AtomicReference<>();
+        _bufferedHandler.setHandler(new AbstractHandler()
+        {
+            @Override
+            public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException
+            {
+                baseRequest.setHandled(true);
+                ServletOutputStream outputStream = response.getOutputStream();
+                BufferUtil.writeTo(BufferUtil.toBuffer("this content will be buffered in a file"), outputStream);
+                outputStream.flush();
+
+                try
+                {
+                    // Delete file and try to write again.
+                    File file = getFile();
+                    assertNotNull(file);
+                    assertThat(file.length(), greaterThan(0L));
+                    Files.delete(file.toPath());
+
+                    // Write again and see whats happens.
+                    for (int i = 0; i < 1000; i++)
+                    {
+                        BufferUtil.writeTo(BufferUtil.toBuffer("this content will will not be written"), outputStream);
+                        outputStream.flush();
+                    }
+                }
+                catch (Throwable t)
+                {
+                    error.set(t);
+                    throw t;
+                }
+            }
+        });
+
+        _server.start();
+        String rawResponse = _localConnector.getResponse("GET /include/path HTTP/1.1\r\nHost: localhost\r\n\r\n");
+        HttpTester.Response response = HttpTester.parseResponse(rawResponse);
+        String responseContent = response.getContent();
+
+        // Resetting the response buffer will delete the file.
+        assertThat(response.getStatus(), is(HttpStatus.INTERNAL_SERVER_ERROR_500));
+        assertThat(getNumFiles(), is(0));
+    }
+
+    public static class FailingInterceptorHandler extends AbstractHandler
+    {
+        @Override
+        public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException
+        {
+            HttpOutput httpOutput = baseRequest.getResponse().getHttpOutput();
+            HttpOutput.Interceptor nextInterceptor = httpOutput.getInterceptor();
+            httpOutput.setInterceptor(new HttpOutput.Interceptor()
+            {
+                boolean failed = false;
+
+                @Override
+                public void write(ByteBuffer content, boolean last, Callback callback)
+                {
+                    if (!failed)
+                    {
+                        failed = true;
+                        callback.failed(new Throwable("intentionally throwing from interceptor"));
+                    }
+                }
+
+                @Override
+                public HttpOutput.Interceptor getNextInterceptor()
+                {
+                    return nextInterceptor;
+                }
+            });
+        }
+    }
+
     private int getNumFiles()
     {
         File[] files = _testDir.toFile().listFiles();
@@ -457,10 +662,19 @@ public class FileBufferedResponseHandlerTest
 
     private long getFileSize()
     {
+        File file = getFile();
+        assertNotNull(file);
+        return file.length();
+    }
+
+    private File getFile()
+    {
         File[] files = _testDir.toFile().listFiles();
-        assertNotNull(files);
+        if (files == null || files.length == 0)
+            return null;
+
         assertThat(files.length, is(1));
-        return files[0].length();
+        return files[0];
     }
 
     private static String generateContent(int size)
