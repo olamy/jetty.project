@@ -235,6 +235,9 @@ public class OpenIdAuthenticator extends LoginAuthenticator
         final Request baseRequest = Objects.requireNonNull(Request.getBaseRequest(request));
         final Response baseResponse = baseRequest.getResponse();
 
+        if (LOG.isDebugEnabled())
+            LOG.debug("validateRequest({},{},{})", req, res, mandatory);
+
         String uri = request.getRequestURI();
         if (uri == null)
             uri = URIUtil.SLASH;
@@ -370,6 +373,8 @@ public class OpenIdAuthenticator extends LoginAuthenticator
                     StringBuffer buf = request.getRequestURL();
                     if (request.getQueryString() != null)
                         buf.append("?").append(request.getQueryString());
+                    if (LOG.isDebugEnabled())
+                        LOG.debug("Remembering J_URI : {}", buf);
                     session.setAttribute(J_URI, buf.toString());
                     session.setAttribute(J_METHOD, request.getMethod());
 
