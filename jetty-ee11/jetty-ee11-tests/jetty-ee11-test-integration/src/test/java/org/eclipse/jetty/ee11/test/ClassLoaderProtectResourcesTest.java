@@ -11,7 +11,7 @@
 // ========================================================================
 //
 
-package org.eclipse.jetty.ee11.webapp;
+package org.eclipse.jetty.ee11.test;
 
 import java.io.IOException;
 import java.net.URI;
@@ -22,6 +22,8 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
+import jakarta.servlet.ServletContainerInitializer;
+import org.eclipse.jetty.ee11.webapp.WebAppContext;
 import org.eclipse.jetty.http.HttpTester;
 import org.eclipse.jetty.server.LocalConnector;
 import org.eclipse.jetty.server.Server;
@@ -29,14 +31,19 @@ import org.eclipse.jetty.toolchain.test.FS;
 import org.eclipse.jetty.toolchain.test.MavenPaths;
 import org.eclipse.jetty.toolchain.test.jupiter.WorkDir;
 import org.eclipse.jetty.toolchain.test.jupiter.WorkDirExtension;
+import org.eclipse.jetty.util.TypeUtil;
 import org.eclipse.jetty.util.URIUtil;
 import org.eclipse.jetty.util.component.LifeCycle;
+import org.example.webapp.ClassLoaderGetResourcesServlet;
+import org.example.webapp.ServletContainerInitializerDiscoveryServlet;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.greaterThan;
 
 @ExtendWith(WorkDirExtension.class)
 public class ClassLoaderProtectResourcesTest
@@ -62,21 +69,67 @@ public class ClassLoaderProtectResourcesTest
     }
 
     @Test
+    public void testServiceLoaderVisibility() throws Exception
+    {
+        ClassLoader serverClassLoader = Thread.currentThread().getContextClassLoader();
+        String resourceName = "META-INF/services/" + ServletContainerInitializer.class.getName();
+        List<URL> allServiceFiles = Collections.list(serverClassLoader.getResources(resourceName));
+        // Find the ee11-apache-jsp URLs
+        List<URI> ee11ApacheJspHits = allServiceFiles.stream()
+            .map(ClassLoaderProtectResourcesTest::toJarURI)
+            .filter(uri -> uri.toASCIIString().contains("ee11-apache-jsp"))
+            .toList();
+        assertThat("Expecting some ee11-apache-jsp SCI", ee11ApacheJspHits.size(), greaterThan(0));
+        int expectedHitsFromServlet = allServiceFiles.size() - ee11ApacheJspHits.size();
+
+        // Create webapp directory
+        Path basePath = workDir.getEmptyPathDir();
+        copyTestClassIntoWebapp(ServletContainerInitializerDiscoveryServlet.class, basePath);
+
+        WebAppContext webapp = new WebAppContext();
+        webapp.setContextPath("/");
+        webapp.setBaseResourceAsPath(basePath);
+        webapp.addServlet(ServletContainerInitializerDiscoveryServlet.class.getName(), "/lookup");
+
+        // Protect a specific jar's SCI from being discovered.
+        ee11ApacheJspHits.forEach(uri ->
+            webapp.getHiddenClassMatcher().add(uri.toASCIIString()));
+
+        startServer(webapp);
+
+        String rawRequest = """
+            GET /lookup HTTP/1.1\r
+            Host: localhost\r
+            Connection: close\r
+            \r
+            """;
+        String rawResponse = connector.getResponse(rawRequest);
+        HttpTester.Response response = HttpTester.parseResponse(rawResponse);
+        assertThat(response.getContent(), containsString("Service Count: %s\n".formatted(expectedHitsFromServlet)));
+    }
+
+    private static URI toJarURI(URL url)
+    {
+        try
+        {
+            return URIUtil.unwrapContainer(url.toURI());
+        }
+        catch (URISyntaxException e)
+        {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
     public void testGetProtectedResources() throws Exception
     {
         // Create webapp directory
         Path basePath = workDir.getEmptyPathDir();
-        Path classesDir = basePath.resolve("WEB-INF/classes");
-        FS.ensureDirExists(classesDir);
-        String pathToCopy = "org/acme/webapp/ClassLoaderGetResourcesServlet.class";
-        Path servletFile = MavenPaths.targetDir().resolve("test-classes/" + pathToCopy);
-        Path destFile = classesDir.resolve(pathToCopy);
-        FS.ensureDirExists(destFile.getParent());
-        Files.copy(servletFile, destFile);
+        copyTestClassIntoWebapp(ClassLoaderGetResourcesServlet.class, basePath);
         WebAppContext webapp = new WebAppContext();
         webapp.setContextPath("/");
         webapp.setBaseResourceAsPath(basePath);
-        webapp.addServlet("org.acme.webapp.ClassLoaderGetResourcesServlet", "/lookup");
+        webapp.addServlet(ClassLoaderGetResourcesServlet.class.getName(), "/lookup");
 
         // The resource name we will be testing
         String resourceName = "META-INF/services/org.eclipse.jetty.http.HttpFieldPreEncoder";
@@ -112,5 +165,19 @@ public class ClassLoaderProtectResourcesTest
             // even when using ClassLoader.getResource() or ClassLoader.getResources()
             webapp.getHiddenClassMatcher().add(uri.toASCIIString());
         }
+    }
+
+    private static void copyTestClassIntoWebapp(Class<?> clazz, Path webappRoot) throws IOException
+    {
+        String pathToCopy = TypeUtil.toClassReference(clazz);
+        Path classFile = MavenPaths.targetDir().resolve("test-classes/" + pathToCopy);
+        Assertions.assertTrue(Files.isRegularFile(classFile), "Class should exist file: " + classFile);
+
+        Path classesDir = webappRoot.resolve("WEB-INF/classes");
+        FS.ensureDirExists(classesDir);
+
+        Path destFile = classesDir.resolve(pathToCopy);
+        FS.ensureDirExists(destFile.getParent());
+        Files.copy(classFile, destFile);
     }
 }

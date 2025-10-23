@@ -11,7 +11,7 @@
 // ========================================================================
 //
 
-package org.acme.webapp;
+package org.example.webapp;
 
 import java.io.IOException;
 import java.io.PrintWriter;
