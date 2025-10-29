@@ -3763,15 +3763,15 @@ public class ResourceServletTest
         // The OutputBufferSize must be smaller than the content length otherwise the request is not served async.
         connector.getConnectionFactory(HttpConfiguration.ConnectionFactory.class).getHttpConfiguration().setOutputBufferSize(0);
 
-        // Change the default async timeout.
+        // Change the default async timeout to a short value, to avoid waiting the default 30 seconds.
         System.setProperty(ServletChannelState.class.getName() + ".DEFAULT_TIMEOUT", "100");
         try
         {
             ResourceServlet resourceServlet = new ResourceServlet();
             context.addServlet(resourceServlet, "/*");
             String text = "Test";
-            Resource memResource = new SlowResource(text.getBytes(UTF_8), 100);
-            resourceServlet.getResourceService().setHttpContentFactory(path -> new ResourceHttpContent(memResource, "text/plain", ByteBufferPool.SIZED_NON_POOLING));
+            Resource resource = new SlowResource(text.getBytes(UTF_8), 100);
+            resourceServlet.getResourceService().setHttpContentFactory(path -> new ResourceHttpContent(resource, "text/plain", ByteBufferPool.SIZED_NON_POOLING));
 
             String rawResponse = connector.getResponse("""
                 GET /context/ HTTP/1.1\r
@@ -3907,7 +3907,8 @@ public class ResourceServletTest
         public void demand(Runnable demandCallback)
         {
             Runnable superDemand = () -> super.demand(demandCallback);
-            timer.schedule(new TimerTask() {
+            timer.schedule(new TimerTask()
+            {
                 @Override
                 public void run()
                 {
