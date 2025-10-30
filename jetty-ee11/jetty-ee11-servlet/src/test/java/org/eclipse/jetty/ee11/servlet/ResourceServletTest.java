@@ -3791,6 +3791,7 @@ public class ResourceServletTest
         connector.getConnectionFactory(HttpConfiguration.ConnectionFactory.class).getHttpConfiguration().setOutputBufferSize(0);
 
         // Change the default async timeout to a short value, to avoid waiting the default 30 seconds.
+        // ResourceServlet should overwrite the async timeout to zero.
         System.setProperty(ServletChannelState.class.getName() + ".DEFAULT_TIMEOUT", "100");
         try
         {
