@@ -108,4 +108,3 @@ public class SPNEGOAuthenticatorTest
         assertThat(response.get(HttpHeader.WWW_AUTHENTICATE), is(HttpHeader.NEGOTIATE.asString()));
     }
 }
-

@@ -59,12 +59,7 @@
       <property name="format" value="^[A-Z][A-Z0-9]*$"/>
     </module>
 
-    <!-- Import Line Ordering -->
-    <module name="CustomImportOrder">
-      <property name="sortImportsInGroupAlphabetically" value="true"/>
-      <property name="separateLineBetweenGroups" value="true"/>
-      <property name="customImportOrderRules" value="STANDARD_JAVA_PACKAGE###THIRD_PARTY_PACKAGE###STATIC"/>
-    </module>
+    <!-- Import ordering is now enforced by Spotless importOrder -->
 
     <!-- do not allow empty blocks in: try, finally, if, else, or switch -->
     <module name="EmptyBlock">

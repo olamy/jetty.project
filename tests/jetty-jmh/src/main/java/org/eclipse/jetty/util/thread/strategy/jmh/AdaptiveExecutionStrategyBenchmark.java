@@ -190,5 +190,3 @@ public class AdaptiveExecutionStrategyBenchmark
         new Runner(opt).run();
     }
 }
-
-

@@ -118,5 +118,3 @@ public class HttpMethodBenchmark
         new Runner(opt).run();
     }
 }
-
-

@@ -101,7 +101,6 @@ public class DateCacheTest
             }
         };
 
-
         for (int i = 0; i < 10; i++)
         {
             assertThat(format(dateCache, "2012-12-21T10:15:30.55Z"), equalTo("Fri Dec 21 10:15:30 UTC 2012 | 550"));

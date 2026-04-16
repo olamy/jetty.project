@@ -339,4 +339,3 @@ public class HttpTokens
         return true;
     }
 }
-

@@ -1300,5 +1300,3 @@ public class HttpOutputTest
         }
     }
 }
-
-

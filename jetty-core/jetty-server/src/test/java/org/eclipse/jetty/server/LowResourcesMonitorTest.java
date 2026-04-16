@@ -16,7 +16,6 @@ package org.eclipse.jetty.server;
 import java.io.InputStream;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 

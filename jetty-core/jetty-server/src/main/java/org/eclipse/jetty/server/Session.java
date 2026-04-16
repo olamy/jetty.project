@@ -13,7 +13,6 @@
 
 package org.eclipse.jetty.server;
 
-import java.util.function.Consumer;
 
 import org.eclipse.jetty.util.Attributes;
 

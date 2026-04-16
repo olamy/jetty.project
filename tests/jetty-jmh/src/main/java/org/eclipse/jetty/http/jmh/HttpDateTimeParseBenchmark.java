@@ -94,5 +94,3 @@ public class HttpDateTimeParseBenchmark
         new Runner(opt).run();
     }
 }
-
-

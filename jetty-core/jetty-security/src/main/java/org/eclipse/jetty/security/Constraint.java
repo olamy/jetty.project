@@ -361,4 +361,3 @@ public interface Constraint
         };
     }
 }
-

@@ -13,7 +13,6 @@
 
 package org.eclipse.jetty.ee9.webapp;
 
-import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 

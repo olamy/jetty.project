@@ -238,6 +238,7 @@
     <jboss.logging.processor.version>3.0.4.Final</jboss.logging.processor.version>
     <jboss.logging.version>3.6.3.Final</jboss.logging.version>
     <jetty-assembly-descriptors.version>1.1</jetty-assembly-descriptors.version>
+    <jetty-java-format.version>0.1.0-SNAPSHOT</jetty-java-format.version>
     <jetty-quiche-native.version>0.24.5</jetty-quiche-native.version>
     <jetty-test-policy.version>1.2</jetty-test-policy.version>
     <jetty-version.maven.plugin.version>2.7</jetty-version.maven.plugin.version>
@@ -1906,11 +1907,20 @@
               <exclude>**/target/**</exclude>
               <!-- Aki Yoshida copyright -->
               <exclude>**/UnixCrypt.java</exclude>
+              <!-- module-info files (matches checkstyle exclusion) -->
+              <exclude>**/module-info.java</exclude>
+              <!-- quiche files (matches checkstyle exclusion) -->
+              <exclude>**/org/eclipse/jetty/quic/quiche/**</exclude>
             </excludes>
             <licenseHeader>
               <file>${maven.multiModuleProjectDirectory}/header-template.txt</file>
               <delimiter>(package |import |public |class |interface |enum |@)</delimiter>
             </licenseHeader>
+            <!-- Import ordering: java/javax -> third-party -> static -->
+            <importOrder>
+              <order>java|javax,,\#</order>
+            </importOrder>
+            <removeUnusedImports/>
           </java>
           <!-- AsciiDoc files license header -->
           <formats>
@@ -1975,45 +1985,6 @@
               <goal>manifest</goal>
             </goals>
             <phase>process-classes</phase>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-checkstyle-plugin</artifactId>
-        <version>${maven.checkstyle.plugin.version}</version>
-        <configuration>
-          <configLocation>jetty-checkstyle.xml</configLocation>
-          <includeTestSourceDirectory>true</includeTestSourceDirectory>
-          <violationSeverity>warning</violationSeverity>
-          <consoleOutput>true</consoleOutput>
-          <sourceDirectories>
-            <!-- only scan source directory (not generated, filtered, or copied source) -->
-            <sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>
-          </sourceDirectories>
-          <testSourceDirectories>
-            <sourceDirectory>${project.build.testSourceDirectory}</sourceDirectory>
-          </testSourceDirectories>
-        </configuration>
-        <dependencies>
-          <dependency>
-            <groupId>com.puppycrawl.tools</groupId>
-            <artifactId>checkstyle</artifactId>
-            <version>${checkstyle.version}</version>
-          </dependency>
-          <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>build-resources</artifactId>
-            <version>${project.version}</version>
-          </dependency>
-        </dependencies>
-        <executions>
-          <execution>
-            <id>checkstyle-check</id>
-            <goals>
-              <goal>check</goal>
-            </goals>
-            <phase>validate</phase>
           </execution>
         </executions>
       </plugin>
@@ -2155,6 +2126,23 @@
               <goal>attach-version-text</goal>
             </goals>
             <phase>process-resources</phase>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.eclipse.jetty.tools</groupId>
+        <artifactId>jetty-java-format-maven-plugin</artifactId>
+        <version>${jetty-java-format.version}</version>
+        <configuration>
+          <skip>${jetty.format.skip}</skip>
+        </configuration>
+        <executions>
+          <execution>
+            <id>jetty-format-check</id>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <phase>validate</phase>
           </execution>
         </executions>
       </plugin>
@@ -2840,6 +2828,7 @@
       <properties>
         <checkstyle.skip>true</checkstyle.skip>
         <enforcer.skip>true</enforcer.skip>
+        <jetty.format.skip>true</jetty.format.skip>
         <skipTests>true</skipTests>
         <spotbugs.skip>true</spotbugs.skip>
         <spotless.skip>true</spotless.skip>

@@ -14,7 +14,6 @@
 package org.eclipse.jetty.util.security;
 
 import java.io.InputStream;
-import java.net.URI;
 import java.security.KeyStore;
 import java.security.cert.CRL;
 import java.security.cert.CertificateFactory;

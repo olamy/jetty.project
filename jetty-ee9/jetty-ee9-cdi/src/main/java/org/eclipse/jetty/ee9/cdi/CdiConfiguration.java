@@ -35,4 +35,3 @@ public class CdiConfiguration extends AbstractConfiguration
         addDependents(AnnotationConfiguration.class, PlusConfiguration.class);
     }
 }
-

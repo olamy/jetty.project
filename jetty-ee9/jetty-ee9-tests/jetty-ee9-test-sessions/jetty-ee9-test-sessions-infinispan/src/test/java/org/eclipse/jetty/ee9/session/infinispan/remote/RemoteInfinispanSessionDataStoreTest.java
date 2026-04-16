@@ -199,5 +199,3 @@ public class RemoteInfinispanSessionDataStoreTest extends AbstractSessionDataSto
         }
     }
 }
-
-

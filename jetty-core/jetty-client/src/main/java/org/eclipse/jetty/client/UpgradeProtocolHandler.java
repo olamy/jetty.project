@@ -17,7 +17,6 @@ import java.util.List;
 
 import org.eclipse.jetty.client.transport.HttpConversation;
 import org.eclipse.jetty.client.transport.HttpRequest;
-import org.eclipse.jetty.client.transport.HttpResponse;
 import org.eclipse.jetty.client.transport.ResponseListeners;
 import org.eclipse.jetty.http.HttpField;
 import org.eclipse.jetty.http.HttpHeader;

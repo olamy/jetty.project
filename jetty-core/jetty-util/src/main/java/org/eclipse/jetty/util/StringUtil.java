@@ -1171,5 +1171,3 @@ public class StringUtil
         // prevent instantiation
     }
 }
-
-

@@ -34,4 +34,3 @@ public class Counter implements java.io.Serializable
         return last;
     }
 }
-

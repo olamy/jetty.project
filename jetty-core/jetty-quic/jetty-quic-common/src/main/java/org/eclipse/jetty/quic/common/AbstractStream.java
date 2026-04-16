@@ -13,11 +13,9 @@
 
 package org.eclipse.jetty.quic.common;
 
-import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jetty.io.CyclicTimeouts;
 import org.eclipse.jetty.quic.api.Stream;
-import org.eclipse.jetty.util.NanoTime;
 import org.eclipse.jetty.util.TypeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

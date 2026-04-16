@@ -29,16 +29,13 @@ import org.eclipse.jetty.ee11.websocket.jakarta.common.encoders.AvailableEncoder
 import org.eclipse.jetty.ee11.websocket.jakarta.common.encoders.IntegerEncoder;
 import org.eclipse.jetty.toolchain.test.Hex;
 import org.eclipse.jetty.websocket.core.WebSocketComponents;
-import org.eclipse.jetty.websocket.core.exception.InvalidWebSocketException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class AvailableEncodersTest
 {

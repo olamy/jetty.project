@@ -51,4 +51,3 @@ public class JndiConfiguration extends AbstractConfiguration
         }
     }
 }
-

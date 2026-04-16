@@ -22,8 +22,6 @@ import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.jetty.start.FS;
-import org.junit.jupiter.api.condition.DisabledOnOs;
-import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 

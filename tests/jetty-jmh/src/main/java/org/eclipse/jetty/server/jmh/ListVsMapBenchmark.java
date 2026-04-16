@@ -343,5 +343,3 @@ public class ListVsMapBenchmark
         new Runner(opt).run();
     }
 }
-
-

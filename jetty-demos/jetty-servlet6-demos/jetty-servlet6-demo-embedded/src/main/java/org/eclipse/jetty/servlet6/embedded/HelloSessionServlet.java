@@ -75,4 +75,3 @@ public class HelloSessionServlet extends HttpServlet
         out.println("<p>" + link + "</p>");
     }
 }
-

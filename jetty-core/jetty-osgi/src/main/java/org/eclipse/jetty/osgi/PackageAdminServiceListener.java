@@ -142,4 +142,3 @@ public class PackageAdminServiceListener implements ServiceListener
         _bootBundleContext.removeServiceListener(this);
     }
 }
-

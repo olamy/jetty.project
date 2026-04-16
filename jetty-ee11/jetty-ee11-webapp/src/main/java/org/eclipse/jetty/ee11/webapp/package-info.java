@@ -15,4 +15,3 @@
  * Jetty Util : Modular Web Application Support
  */
 package org.eclipse.jetty.ee11.webapp;
-

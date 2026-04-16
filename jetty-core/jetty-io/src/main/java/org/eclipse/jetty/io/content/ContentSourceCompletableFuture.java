@@ -306,4 +306,3 @@ public abstract class ContentSourceCompletableFuture<X> extends CompletableFutur
         return super.whenComplete(action);
     }
 }
-

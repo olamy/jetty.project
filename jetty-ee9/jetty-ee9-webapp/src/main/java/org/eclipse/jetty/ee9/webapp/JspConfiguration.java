@@ -53,4 +53,3 @@ public class JspConfiguration extends AbstractConfiguration
         }
     }
 }
-

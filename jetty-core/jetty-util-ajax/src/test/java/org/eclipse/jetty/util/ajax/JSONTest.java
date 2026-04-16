@@ -14,10 +14,7 @@
 package org.eclipse.jetty.util.ajax;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;

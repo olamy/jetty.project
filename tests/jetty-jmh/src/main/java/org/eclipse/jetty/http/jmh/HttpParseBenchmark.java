@@ -145,5 +145,3 @@ public class HttpParseBenchmark
         new Runner(opt).run();
     }
 }
-
-

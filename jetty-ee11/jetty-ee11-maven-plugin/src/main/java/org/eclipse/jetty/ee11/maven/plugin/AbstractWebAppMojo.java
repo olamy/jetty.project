@@ -954,4 +954,3 @@ public abstract class AbstractWebAppMojo extends AbstractMojo
         }
     }
 }
-

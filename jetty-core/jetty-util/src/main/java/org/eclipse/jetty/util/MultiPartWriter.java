@@ -134,7 +134,3 @@ public class MultiPartWriter extends FilterWriter
         inPart = false;
     }
 }
-
-
-
-

@@ -15,4 +15,3 @@
  * Jetty Deploy : Deploy Management
  */
 package org.eclipse.jetty.deploy;
-

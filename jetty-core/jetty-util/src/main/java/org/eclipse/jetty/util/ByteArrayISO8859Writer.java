@@ -240,5 +240,3 @@ public class ByteArrayISO8859Writer extends Writer
         return Arrays.copyOf(_buf, _size);
     }
 }
-    
-    

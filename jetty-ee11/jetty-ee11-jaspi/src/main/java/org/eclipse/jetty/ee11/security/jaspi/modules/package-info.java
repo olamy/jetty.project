@@ -15,4 +15,3 @@
  * Jetty Jaspi : Authentication Modules
  */
 package org.eclipse.jetty.ee11.security.jaspi.modules;
-

@@ -14,7 +14,6 @@
 package org.eclipse.jetty.tests.distribution;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jetty.client.ContentResponse;
 import org.eclipse.jetty.client.HttpClient;

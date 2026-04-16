@@ -555,7 +555,6 @@ public class IteratingCallbackTest
         AtomicReference<Throwable> failure = new AtomicReference<>();
         AtomicMarkableReference<Throwable> completed = new AtomicMarkableReference<>(null, false);
 
-
         Throwable cause = new Throwable("test abort");
 
         IteratingCallback icb = new IteratingCallback()

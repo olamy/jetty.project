@@ -16,7 +16,6 @@ package org.eclipse.jetty.test.client.transport;
 import java.io.InterruptedIOException;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Queue;

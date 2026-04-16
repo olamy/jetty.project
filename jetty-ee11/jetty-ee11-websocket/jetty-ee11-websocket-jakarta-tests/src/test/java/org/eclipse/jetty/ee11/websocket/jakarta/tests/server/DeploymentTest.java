@@ -13,7 +13,6 @@
 
 package org.eclipse.jetty.ee11.websocket.jakarta.tests.server;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 

@@ -66,4 +66,3 @@ public class DumpableCollection implements Dumpable
         return "%s@%x[%s,size=%d]".formatted(TypeUtil.toShortName(this.getClass()), hashCode(), _name, _collection.size());
     }
 }
-

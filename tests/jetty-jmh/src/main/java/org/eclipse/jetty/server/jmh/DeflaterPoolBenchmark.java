@@ -118,5 +118,3 @@ public class DeflaterPoolBenchmark
         new Runner(opt).run();
     }
 }
-
-

@@ -61,5 +61,3 @@ public class JAASPrincipal implements Principal, Serializable
         return getName();
     }
 }
-
-    

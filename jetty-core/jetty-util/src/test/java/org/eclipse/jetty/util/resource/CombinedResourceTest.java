@@ -589,7 +589,6 @@ public class CombinedResourceTest
             Resource fourth = resourceFactory.newResource(four);
             Resource fourText = fourth.resolve("four.txt");
 
-
             assertThat(oneTxt.contains(composite), is(false));
             assertThat(threeTxt.contains(composite), is(false));
             assertThat(oneTxt.contains(dir), is(false));
@@ -693,7 +692,6 @@ public class CombinedResourceTest
             );
 
             assertThat(composite.contains(other), is(false));
-
 
             other = ResourceFactory.combine(
                 List.of(
